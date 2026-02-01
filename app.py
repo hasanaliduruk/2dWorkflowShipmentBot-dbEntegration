@@ -42,7 +42,46 @@ except:
 # --- FONKSİYONLAR ---
 
 
+@st.fragment(run_every=2)  # <--- SİHİRLİ DOKUNUŞ: 2 saniyede bir çalışır
+def canli_loglari_goster(manager):
+    st.info("⚡ Canlı Log Akışı (Otomatik Yenilenir)")
+    log_container = st.container(height=400)
+    with log_container:
+        # En güncel logları çek
+        for log in manager.logs:
+            st.text(log)
 
+@st.fragment(run_every=5)  # <--- 5 saniyede bir durum tablosunu yeniler
+def canli_takip_listesi(manager):
+    st.subheader("📋 Aktif Takip Listesi (Canlı)")
+    
+    # Durum Göstergesi
+    if manager.is_running:
+        st.markdown("**:green[● ÇALIŞIYOR]**", help=f"Bot aktif. {manager.mins_threshold} dakikada bir kontrol ediliyor.")
+    else:
+        st.markdown("**:red[● DURDURULDU]**", help="Bot şu an işlem yapmıyor.")
+
+    # Tabloyu Getir
+    watch_df = manager.get_watch_list_df()
+
+    if not watch_df.empty:
+        # Tabloyu salt okunur (static) gösterelim, düzenleme yapmak isterse kullanıcı durdurup yapsın
+        # (Sürekli yenilenen tabloda edit yapmak zordur, imleç kaybolur)
+        st.dataframe(
+            watch_df,
+            column_config={
+                "account_name": "Hesap",
+                "name": "Taslak Adı",
+                "date": "Tarih",
+                "loc": "From",
+                "max_mile": "Max Mil",
+                "found_warehouses": "Bulunanlar"
+            },
+            hide_index=True,
+            use_container_width=True
+        )
+    else:
+        st.info("Takip listesi şu an boş.")
 
 
 # --- MAIN APPLICATION FLOW ---
@@ -450,16 +489,7 @@ def main():
                         st.warning("Seçilenler zaten listede.")
 
     with tab_logs:
-        if st.button("Logları Yenile"):
-            pass # Sadece rerun tetikler
-        
-        log_container = st.container(height=400)
-        with log_container:
-            for log in manager.logs:
-                st.text(log)
-                
-        # Otomatik yenileme notu
-        st.caption("Loglar arka planda birikir. Sayfayı yenileyerek veya butona basarak görebilirsiniz.")
+        canli_loglari_goster(manager)
 
     
     # 1. BÖLÜM: TAKİP LİSTESİ YÖNETİMİ

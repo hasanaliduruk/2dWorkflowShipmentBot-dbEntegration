@@ -3,7 +3,7 @@ import json
 import os
 from datetime import datetime
 
-DB_NAME = "bot_data.db"
+DB_NAME = os.path.join("data", "bot_data.db")
 
 def get_connection():
     return sqlite3.connect(DB_NAME, check_same_thread=False)
@@ -15,6 +15,7 @@ def init_db():
     # Takip Listesi Tablosu
     c.execute('''CREATE TABLE IF NOT EXISTS tasks (
         date_key TEXT PRIMARY KEY,
+        owner_email TEXT,
         account_id TEXT,
         account_name TEXT,
         draft_name TEXT,
@@ -36,39 +37,39 @@ def init_db():
     conn.close()
 
 # --- GÖREV İŞLEMLERİ ---
-def add_task(data):
+def add_task(owner_email, data):
     conn = get_connection()
     try:
         # Listeleri JSON string'e çeviriyoruz çünkü SQLite array tutamaz
         found_wh_str = json.dumps(data.get('found_warehouses', []))
         
         conn.execute('''INSERT OR REPLACE INTO tasks 
-                        (date_key, account_id, account_name, draft_name, loc, max_mile, targets, found_warehouses)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)''', 
-                        (data['date'], data.get('account_id'), data.get('account_name'), 
+                        (date_key, owner_email, account_id, account_name, draft_name, loc, max_mile, targets, found_warehouses)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
+                        (data['date'], owner_email, data.get('account_id'), data.get('account_name'), 
                          data['name'], data['loc'], data['max_mile'], 
                          data['targets'], found_wh_str))
         conn.commit()
     finally:
         conn.close()
 
-def remove_task(date_key):
+def remove_task(owner_email, date_key):
     conn = get_connection()
-    conn.execute("DELETE FROM tasks WHERE date_key = ?", (date_key,))
+    conn.execute("DELETE FROM tasks WHERE date_key = ? AND owner_email = ?", (date_key, owner_email))
     conn.commit()
     conn.close()
 
-def get_all_tasks():
+def get_all_tasks(owner_email):
     conn = get_connection()
-    conn.row_factory = sqlite3.Row  # Sözlük gibi erişmek için
-    cursor = conn.execute("SELECT * FROM tasks")
+    conn.row_factory = sqlite3.Row
+    # SADECE KENDİ TASLAKLARINI ÇEK
+    cursor = conn.execute("SELECT * FROM tasks WHERE owner_email = ?", (owner_email,))
     rows = cursor.fetchall()
     conn.close()
     
     tasks = {}
     for row in rows:
         d = dict(row)
-        # Veriyi geri çekerken 'name' ve 'date' anahtarlarını kodun beklediği formata uyduruyoruz
         d['name'] = row['draft_name']
         d['date'] = row['date_key']
         d['found_warehouses'] = json.loads(row['found_warehouses']) if row['found_warehouses'] else []

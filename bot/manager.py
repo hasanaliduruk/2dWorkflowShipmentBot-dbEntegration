@@ -109,14 +109,13 @@ class GlobalManager:
 
     @property
     def watch_list(self):
-        return get_all_tasks()
+        return get_all_tasks(self.email)
 
     def save_task(self, task_data):
-        key = task_data['date']
-        add_task(key, task_data)
+        add_task(self.email, task_data)
 
     def delete_task(self, key):
-        remove_task(key)
+        remove_task(self.email, key)
 
     def get_watch_list_df(self):
         """

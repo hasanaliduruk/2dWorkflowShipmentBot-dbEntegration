@@ -19,3 +19,6 @@ Thumbs.db
 backup/
 backup.zip
 old/
+
+data/
+.gitignore
