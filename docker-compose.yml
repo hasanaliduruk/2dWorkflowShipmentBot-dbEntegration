@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  bot_app:
+    build: .
+    container_name: 2dworkflow_bot
+    restart: always
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./data:/app/data
+      - ./bot_data.db:/app/bot_data.db
+    environment:
+      - TZ=Europe/Istanbul
