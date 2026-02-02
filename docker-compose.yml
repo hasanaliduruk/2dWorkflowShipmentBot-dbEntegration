@@ -4,8 +4,9 @@ services:
     container_name: 2dworkflow_bot
     restart: always
     ports:
-      - "8501:8501"
-    volumes:
+      - "127.0.0.1:8501:8501"
+    volumes:  # <--- MOVED HERE
       - ./data:/app/data
+      - ./.streamlit/secrets.toml:/app/.streamlit/secrets.toml:ro
     environment:
       - TZ=Europe/Istanbul
