@@ -21,3 +21,4 @@ backup.zip
 old/
 
 data/
+.streamlit/
